@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SettingsActivity">
+
+    <Button
+        android:id="@+id/exitButton"
+        android:layout_width="116dp"
+        android:layout_height="68dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginStart="226dp"
+        android:layout_marginTop="628dp"
+        android:text="Exit" />
+
+    <EditText
+        android:id="@+id/rayDensity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="33dp"
+        android:layout_marginBottom="228dp"
+        android:ems="10"
+        android:hint="Ray Density"
+        android:inputType="number"
+        android:textColorLink="#03A9F4"
+        tools:ignore="TouchTargetSizeCheck" />
+
+    <EditText
+        android:id="@+id/sampleDensity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="33dp"
+        android:layout_marginBottom="169dp"
+        android:ems="10"
+        android:hint="Sample Density"
+        android:inputType="number"
+        android:textColorLink="#03A9F4"
+        tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+
+    <EditText
+        android:id="@+id/endAngle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="34dp"
+        android:layout_marginBottom="277dp"
+        android:ems="10"
+        android:hint="End Angle (360 Default)"
+        android:inputType="number|numberDecimal" />
+
+    <EditText
+        android:id="@+id/startAngle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="36dp"
+        android:layout_marginBottom="328dp"
+        android:ems="10"
+        android:hint="Start Angle (0 Default)"
+        android:inputType="number|numberDecimal" />
+
+    <Switch
+        android:id="@+id/artfHozSwitch"
+        android:layout_width="177dp"
+        android:layout_height="57dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginEnd="13dp"
+        android:layout_marginBottom="434dp"
+        android:text="Artifical Horizon" />
+
+    <EditText
+        android:id="@+id/artifHoz"
+        android:layout_width="233dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="308dp"
+        android:ems="10"
+        android:hint="Artificial Horizon Distance"
+        android:inputType="numberDecimal" />
+</RelativeLayout>
