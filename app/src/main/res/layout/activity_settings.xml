@@ -75,8 +75,8 @@
         android:layout_height="57dp"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginEnd="13dp"
-        android:layout_marginBottom="434dp"
+        android:layout_marginEnd="9dp"
+        android:layout_marginBottom="660dp"
         android:text="Artifical Horizon" />
 
     <EditText
@@ -90,4 +90,38 @@
         android:ems="10"
         android:hint="Artificial Horizon Distance"
         android:inputType="numberDecimal" />
+
+    <Switch
+        android:id="@+id/artifLocSwitch"
+        android:layout_width="174dp"
+        android:layout_height="44dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="80dp"
+        android:layout_marginEnd="11dp"
+        android:text="Artificial Location" />
+
+    <EditText
+        android:id="@+id/artifLat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="36dp"
+        android:layout_marginTop="212dp"
+        android:ems="10"
+        android:hint="Artifical Latitude"
+        android:inputType="numberSigned|numberDecimal" />
+
+    <EditText
+        android:id="@+id/artifLon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="36dp"
+        android:layout_marginTop="258dp"
+        android:ems="10"
+        android:hint="Artificial Longitude"
+        android:inputType="numberSigned|numberDecimal" />
 </RelativeLayout>

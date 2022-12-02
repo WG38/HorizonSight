@@ -3,6 +3,7 @@ package com.example.horizonsight
 //import java.awt.PageAttributes.MediaType
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -21,6 +22,7 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.*
+import kotlinx.coroutines.*
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.URL
@@ -36,6 +38,9 @@ var nOfRayHolder = 15
 var nOfSamplesHolder = 10
 var startAngleHolder = 0.0
 var endAngleHolder = 360.0
+val horizonCalcScope = CoroutineScope(Dispatchers.IO + CoroutineName("Horizon Coroutine"))
+val altitudeCalcScope = CoroutineScope(Dispatchers.IO + CoroutineName("Altitude Coroutine"))
+lateinit var tempPolylineHolder : Polyline
 
 class MainActivity : AppCompatActivity(), OnMapReadyCallback{
     //variables for location & altitude handling
@@ -46,7 +51,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
     private var altitudeHolder by Delegates.notNull<Double>()
     private var horizonHolder by Delegates.notNull<Double>()
     private var artificialHorizonHolder by Delegates.notNull<Double>()
-    private var artificialHorizonCheck by Delegates.notNull<Boolean>()
+    private var artificialHorizonCheck = false
+    private lateinit var artificiaLocationHolder : Array<Double>
+    private var artificialLocationCheck = false
+    private var constantLocationRequests = false
 
 
     //locate button
@@ -82,10 +90,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         horizonHolder = 0.0
         currAltHolder = ""
         artificialHorizonHolder = 0.0
+        artificialHorizonCheck = false
+        artificiaLocationHolder = arrayOf(0.0,0.0)
 
         //get initial location
         isLocationPermissionGranted()
-        getLastKnownLocation()
+        if (!artificialLocationCheck) {
+            getLastKnownLocation()
+        }
+        else {
+            locArray = artificiaLocationHolder
+        }
+
         //Log.d("FUCK1", "works?")
 
         //gets the onMapReady function
@@ -93,8 +109,25 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         mapFragment.getMapAsync(this)
 
         snapLocation = findViewById(R.id.snapLocButton)
+        snapLocation.setBackgroundColor(Color.RED)
         snapLocation.setOnClickListener() {
-            snapToLocation(locArray)
+            if (constantLocationRequests) {
+                constantLocationRequests = false
+                snapLocation.setBackgroundColor(Color.RED)
+            }
+            else {
+                constantLocationRequests = true
+                snapLocation.setBackgroundColor(Color.GREEN)
+                if (!artificialLocationCheck) {
+                    getLastKnownLocation()
+                }
+                else {
+                    snapToLocation(locArray)
+                }
+
+            }
+
+
 
         }
 
@@ -102,7 +135,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
         displayHorizonButton = findViewById(R.id.disHozButton)
         displayHorizonButton.setOnClickListener() {
-            distanceToHorizon(altitudeHolder)
+            distanceToHorizon(altitudeHolder,locArray)
             //change this
             if (artificialHorizonCheck) {
                 displayHorizon(artificialHorizonHolder,locArray)
@@ -135,6 +168,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
             endAngleHolder = temp_end_angle.toDouble()
             artificialHorizonHolder = intent.getStringExtra("artf_horizon")!!.toDouble()
             artificialHorizonCheck = intent.getStringExtra("artf_horizon_check").toBoolean()
+            artificiaLocationHolder = arrayOf(intent.getStringExtra("artf_lat")!!.toDouble(),intent.getStringExtra("artf_lon")!!.toDouble())
+            artificialLocationCheck = intent.getStringExtra("artf_loc_check").toBoolean()
         }
 
 
@@ -158,8 +193,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
     }
     override fun onResume() {
         super.onResume()
-        getLastKnownLocation()
-        startLocationUpdates()
+        if (!artificialLocationCheck) {
+            getLastKnownLocation()
+            startLocationUpdates()
+        }
+        else {
+            DisplayLocation(artificiaLocationHolder[0],artificiaLocationHolder[1])
+        }
+
 
 
 
@@ -231,14 +272,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
                 val location = locationResult.lastLocation
                 val lat = location?.latitude
                 val lon = location?.longitude
-                val alt = location?.altitude
+
 
                 if (lat != null) {
                     if (lon != null) {
 
-                        if (alt != null) {
-                            DisplayLocation(lat,lon,alt)
-                        }
+
+                        DisplayLocation(lat,lon)
+
 
                     }
                 }
@@ -249,12 +290,17 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
             }
         }
     }
-    fun DisplayLocation(latitude:Double,longitude:Double,altitude:Double)
+    fun DisplayLocation(latitude:Double,longitude:Double)
     {
-        var current_location_str = latitude.toString() + " " + longitude.toString()
+        val current_location_str = latitude.toString() + " " + longitude.toString()
         val current_location_text = findViewById<View>(R.id.locText) as TextView
 
-        val  current_altitude_str = altitude.toString()
+
+
+
+
+
+        val  current_altitude_str = altitudeHolder.toString()
         val horizon_dist = horizonHolder
 
 
@@ -264,7 +310,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         current_horizon_text.text = "Current Horizon Distance: $horizon_dist km"
 
         locArray = arrayOf<Double>(latitude,longitude)
-        altitudeHolder = altitude
+        if (constantLocationRequests){
+            snapToLocation(locArray)
+            Log.d("FUCK78","Works?")
+        }
+
+        //altitudeHolder = altitude
 
 
 
@@ -299,8 +350,30 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
     }
-    fun distanceToHorizon(alt: Double) {
+    private fun distanceToHorizon(alt: Double, latlong: Array<Double>) {
+
+        altitudeCalcScope.launch {
+            val altURL = URL("https://maps.googleapis.com/maps/api/elevation/json?locations=${latlong[0]}%2C${latlong[1]}&key=${server_api_key}")
+            val connection = altURL.openConnection()
+            BufferedReader(InputStreamReader(connection.getInputStream())).use { inp ->
+                var line: String?
+
+
+                while (inp.readLine().also { line = it } != null) {
+                    Log.d("FUCK77",line.toString())
+                    if (line?.contains("elevation") == true) {
+                        var altitudeStr = line.toString()
+                        altitudeStr =  altitudeStr.subSequence(23,altitudeStr.length-1) as String
+                        altitudeHolder = altitudeStr.toDouble()
+                    }
+
+                }
+
+            }
+
+        }
         horizonHolder =  3.57 * sqrt(alt)
+        //Log.d("FUCK77",alt.toString())
 
     }
     fun snapToLocation(latlong : Array<Double>)
@@ -319,34 +392,47 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
     }
     fun displayHorizon(horizonDist : Double,latlong:Array<Double>)
     {
+
+
+
+
         mHorizonPolyline?.remove()
         val lat = latlong[0]
         val lon = latlong[1]
         val latlng = LatLng(lat,lon) // later fuse this with the calculation from snapToLocation and place in 1 place
+        Log.d("FUCK70","$lat $lon")
 
 
 
-        //all the magic point calculation happens here
-        val allLatLng = asyncAltitudeRequester(latlong,horizonDist)
-        var finalLatLngArray = mutableListOf<LatLng>()
-        for (i in 0 .. allLatLng.size-1) {
-            finalLatLngArray.add(LatLng(allLatLng[i][0],allLatLng[i][1]))
-        }
-
-        //and the we draw the actual lines here:
-        //todo: draw lines based on the horizon distance points
-
-        val horizonPolyLine = mMap?.addPolyline(PolylineOptions()
-            .clickable(false)
-            .add(
-                finalLatLngArray[0]))
-        for (i in 0 .. finalLatLngArray.size-1) {
-            if (horizonPolyLine != null) {
-                val omg = horizonPolyLine.points
-                omg.add(finalLatLngArray[i])
-                horizonPolyLine.points = omg
+        //all the magic point calculation happens here (inside a coroutine in another scope)
+        horizonCalcScope.launch {
+            val allLatLng = asyncAltitudeRequester(latlong,horizonDist)
+            var finalLatLngArray = mutableListOf<LatLng>()
+            for (i in 0 .. allLatLng.size-1) {
+                finalLatLngArray.add(LatLng(allLatLng[i][0],allLatLng[i][1]))
             }
+
+            //and we draw the actual lines here:
+            runOnUiThread() {
+                val horizonPolyLine = mMap?.addPolyline(PolylineOptions()
+                    .clickable(false)
+                    .add(
+                        finalLatLngArray[0]))
+                for (i in 0 .. finalLatLngArray.size-1) {
+                    if (horizonPolyLine != null) {
+                        val omg = horizonPolyLine.points
+                        omg.add(finalLatLngArray[i])
+                        horizonPolyLine.points = omg
+                    }
+                }
+            }
+
+
+
         }
+
+
+
         mHorizonCircle = mMap?.addCircle(
             CircleOptions()
                 .center(latlng)
@@ -355,28 +441,32 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
                 .fillColor(Color.parseColor("#2271cce7"))
         )
     }
-    fun asyncAltitudeRequester(latLonHolder : Array<Double>,horizonDist : Double) : MutableList<Array<Double>> {
+    suspend fun asyncAltitudeRequester(latLonHolder : Array<Double>, horizonDist : Double) : MutableList<Array<Double>> {
 
         //ok so AltitudeAsyncTasks takes our current position,altitude and
         // horizon distance and based on it iterates through n km increments in i directions to find if theres a higher elevation
         // than location elevation, that obstructs the horizon
 
         val masterAltHolder = arrayOf(latLonHolder[0],latLonHolder[1],altitudeHolder,horizonDist)
-        val altTask =  AltitudeAsyncTasks()
-        //val myTaskParams = arrayOf(true, true, true)
-        val myAsyncTask = AltitudeAsyncTasks().execute(masterAltHolder).get()
-
-
-        //Log.d("FUCK60",myAsyncTask[0][0].toString())
-
+        //val altTask =  AltitudeAsyncTasks()
+            //val myTaskParams = arrayOf(true, true, true)
+        val myAsyncTask = doInBackground(masterAltHolder)//execute(masterAltHolder).get()
         return myAsyncTask
+
+            //Log.d("FUCK60",myAsyncTask[0][0].toString())
+
+
+
+
+
+
 
 
     }
-    class AltitudeAsyncTasks : AsyncTask<Array<Double>,Unit, MutableList<Array<Double>>>() {
+    //class AsyncHorizonClass {//AsyncTask<Array<Double>,Unit, MutableList<Array<Double>>>() {
 
 
-        override fun doInBackground(vararg combinedLatLonAltHozArray: Array<Double>): MutableList<Array<Double>> {
+        private fun doInBackground(vararg combinedLatLonAltHozArray: Array<Double>): MutableList<Array<Double>> {
 
 
             val latitude = combinedLatLonAltHozArray[0][0]
@@ -389,9 +479,9 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
             for (i in 0..nOfRays)
             {
                 val bearing = (i*((Math.abs(endAngleHolder - startAngleHolder)/nOfRays)) + startAngleHolder)
-                Log.d("FUCK61",bearing.toString())
+               // Log.d("FUCK61",bearing.toString())
                 val currPair = EndPoint(bearing,horizon,latitude,longitude)
-                Log.d("FUCK61",currPair[0].toString() + " " + currPair[1].toString())
+                //Log.d("FUCK61",currPair[0].toString() + " " + currPair[1].toString())
                 coordsMasterList.add(i,currPair)
             }
             //Log.d("FUCK56", latitude.toString() + " " +  longitude.toString() + " " + horizon.toString())
@@ -405,12 +495,21 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
             val finalReturnArray = mutableListOf<Array<Double>>() // final array of coord pairs
             for (j in 0..nOfRays)
             {
+
+
                 var altMasterList = mutableListOf<Array<Double>>()
                 val targetLat = coordsMasterList[j][0]
                 val targetLon = coordsMasterList[j][1]
                 val currUrl = URL("https://maps.googleapis.com/maps/api/elevation/json?path=${latitude}%2C${longitude}%7C${targetLat}%2C${targetLon}&samples=${nOfSamples}&key=${server_api_key}")
                 val connection = currUrl.openConnection()
 
+
+                runOnUiThread() {
+                    tempPolylineHolder = mMap?.addPolyline(PolylineOptions()
+                        .clickable(false)
+                        .add(
+                            LatLng(latitude,longitude),LatLng(targetLat,targetLon)))!!
+                }
 
                 BufferedReader(InputStreamReader(connection.getInputStream())).use { inp ->
                     var line: String?
@@ -465,9 +564,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
                     }
                 }
+                runOnUiThread() {
+                    tempPolylineHolder.remove()
+                }
 
                 val finalCoordinatePair = compareAltitudesForRay(altMasterList,altitude,targetLat, targetLon)
                 finalReturnArray.add(finalCoordinatePair)
+
             }
 
 
@@ -569,7 +672,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
 
-}
+//}
 
 
 
