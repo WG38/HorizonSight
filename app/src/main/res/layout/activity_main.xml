@@ -21,18 +21,20 @@
         android:layout_height="94dp"
         android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="30dp"
-        android:layout_marginTop="262dp"
-        android:textColor="#FF0000" />
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="103dp"
+        android:textColor="#FFFFFF" />
 
     <TextView
         android:id="@+id/horizonText"
-        android:layout_width="199dp"
-        android:layout_height="136dp"
+        android:layout_width="216dp"
+        android:layout_height="81dp"
         android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginStart="15dp"
-        android:layout_marginBottom="576dp" />
+        android:layout_marginStart="6dp"
+        android:layout_marginTop="9dp"
+        android:layout_marginBottom="641dp" />
 
     <Button
         android:id="@+id/snapLocButton"

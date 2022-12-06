@@ -93,6 +93,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         artificialHorizonCheck = false
         artificiaLocationHolder = arrayOf(0.0,0.0)
 
+
+        //give colors to buttons
+
+
         //get initial location
         isLocationPermissionGranted()
         if (!artificialLocationCheck) {
@@ -101,6 +105,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         else {
             locArray = artificiaLocationHolder
         }
+
+
 
         //Log.d("FUCK1", "works?")
 
@@ -113,7 +119,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         snapLocation.setOnClickListener() {
             if (constantLocationRequests) {
                 constantLocationRequests = false
+                //getLastKnownLocation()
+                //  DisplayLocation(locArray[0],locArray[1])
                 snapLocation.setBackgroundColor(Color.RED)
+
             }
             else {
                 constantLocationRequests = true
@@ -130,12 +139,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
         }
-
+        Log.d("FUCK81",locArray[0].toString())
 
 
         displayHorizonButton = findViewById(R.id.disHozButton)
+        displayHorizonButton.setBackgroundColor(Color.WHITE)
         displayHorizonButton.setOnClickListener() {
             distanceToHorizon(altitudeHolder,locArray)
+            Log.d("FUCK80","WHAT????")
             //change this
             if (artificialHorizonCheck) {
                 displayHorizon(artificialHorizonHolder,locArray)
@@ -143,6 +154,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
             else
             {
                 displayHorizon(horizonHolder,locArray)
+                Log.d("FUCK80",locArray[0].toString())
+                Log.d("FUCK80","WHATx2????")
             }
 
 
@@ -150,6 +163,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
         //enter settings tab
         enterSetMenuButton = findViewById(R.id.settButton)
+        enterSetMenuButton.setBackgroundColor(Color.WHITE)
         enterSetMenuButton.setOnClickListener() {
             openSettingsActivity()
 
@@ -262,8 +276,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
         }
         locationRequest = LocationRequest.create()
-        locationRequest.interval = 10000
-        locationRequest.fastestInterval = 10000
+        locationRequest.interval = 1000
+        locationRequest.fastestInterval = 100
         locationRequest.smallestDisplacement = 1f // 170 m = 0.1 mile
         locationRequest.priority = Priority.PRIORITY_HIGH_ACCURACY
         locationCallback = object : LocationCallback() {
@@ -297,7 +311,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
 
-
+        Log.d("FUCK81","WHAT NANI WTFFFF")
 
 
         val  current_altitude_str = altitudeHolder.toString()
@@ -310,6 +324,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         current_horizon_text.text = "Current Horizon Distance: $horizon_dist km"
 
         locArray = arrayOf<Double>(latitude,longitude)
+        Log.d("FUCK81",locArray[0].toString())
         if (constantLocationRequests){
             snapToLocation(locArray)
             Log.d("FUCK78","Works?")
@@ -372,7 +387,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
             }
 
         }
-        horizonHolder =  3.57 * sqrt(alt)
+        horizonHolder =  3.57 * sqrt(altitudeHolder)
         //Log.d("FUCK77",alt.toString())
 
     }
@@ -397,16 +412,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
         mHorizonPolyline?.remove()
+        mHorizonCircle?.remove()
         val lat = latlong[0]
         val lon = latlong[1]
         val latlng = LatLng(lat,lon) // later fuse this with the calculation from snapToLocation and place in 1 place
         Log.d("FUCK70","$lat $lon")
+        Log.d("FUCK70",latlong[0].toString())
 
 
 
         //all the magic point calculation happens here (inside a coroutine in another scope)
         horizonCalcScope.launch {
             val allLatLng = asyncAltitudeRequester(latlong,horizonDist)
+
             var finalLatLngArray = mutableListOf<LatLng>()
             for (i in 0 .. allLatLng.size-1) {
                 finalLatLngArray.add(LatLng(allLatLng[i][0],allLatLng[i][1]))
@@ -521,6 +539,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
                     var eleCheck = 0
                     var latCheck = 0
                     var lonCheck = 0
+
+                    Log.d("FUCK80",latitude.toString())
 
                     while (inp.readLine().also { line = it } != null) {
                         //Log.d("FUCK57","WHAT?")
