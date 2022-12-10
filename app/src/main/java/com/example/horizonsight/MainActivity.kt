@@ -9,7 +9,6 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.AsyncTask
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -94,10 +93,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         artificiaLocationHolder = arrayOf(0.0,0.0)
 
 
-        //give colors to buttons
 
 
-        //get initial location
+
+
         isLocationPermissionGranted()
         if (!artificialLocationCheck) {
             getLastKnownLocation()
@@ -108,7 +107,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
 
-        //Log.d("FUCK1", "works?")
+
 
         //gets the onMapReady function
         val mapFragment = fragmentManager.findFragmentById(R.id.map) as MapFragment
@@ -119,8 +118,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         snapLocation.setOnClickListener() {
             if (constantLocationRequests) {
                 constantLocationRequests = false
-                //getLastKnownLocation()
-                //  DisplayLocation(locArray[0],locArray[1])
+
                 snapLocation.setBackgroundColor(Color.RED)
 
             }
@@ -139,23 +137,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
         }
-        Log.d("FUCK81",locArray[0].toString())
 
+
+        distanceToHorizon(altitudeHolder,locArray)
 
         displayHorizonButton = findViewById(R.id.disHozButton)
         displayHorizonButton.setBackgroundColor(Color.WHITE)
         displayHorizonButton.setOnClickListener() {
-            distanceToHorizon(altitudeHolder,locArray)
-            Log.d("FUCK80","WHAT????")
-            //change this
+
+
+
             if (artificialHorizonCheck) {
-                displayHorizon(artificialHorizonHolder,locArray)
+                displayHorizon(locArray)
             }
             else
             {
-                displayHorizon(horizonHolder,locArray)
-                Log.d("FUCK80",locArray[0].toString())
-                Log.d("FUCK80","WHATx2????")
+                displayHorizon(locArray)
+
             }
 
 
@@ -188,7 +186,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
 
-        //mMap = temporaryMap.
+
 
 
 
@@ -226,8 +224,8 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        Log.d("FUCK3", "works?")
-        //snap to location button
+
+
 
     }
 
@@ -311,7 +309,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
 
-        Log.d("FUCK81","WHAT NANI WTFFFF")
+
 
 
         val  current_altitude_str = altitudeHolder.toString()
@@ -324,10 +322,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         current_horizon_text.text = "Current Horizon Distance: $horizon_dist km"
 
         locArray = arrayOf<Double>(latitude,longitude)
-        Log.d("FUCK81",locArray[0].toString())
+
         if (constantLocationRequests){
             snapToLocation(locArray)
-            Log.d("FUCK78","Works?")
+
         }
 
         //altitudeHolder = altitude
@@ -375,10 +373,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
                 while (inp.readLine().also { line = it } != null) {
-                    Log.d("FUCK77",line.toString())
+
                     if (line?.contains("elevation") == true) {
                         var altitudeStr = line.toString()
                         altitudeStr =  altitudeStr.subSequence(23,altitudeStr.length-1) as String
+
                         altitudeHolder = altitudeStr.toDouble()
                     }
 
@@ -387,8 +386,15 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
             }
 
         }
-        horizonHolder =  3.57 * sqrt(altitudeHolder)
-        //Log.d("FUCK77",alt.toString())
+
+        if (altitudeHolder > 0) {
+            horizonHolder =  3.57 * sqrt(altitudeHolder)
+        }
+        else {
+            horizonHolder = 0.0
+        }
+
+
 
     }
     fun snapToLocation(latlong : Array<Double>)
@@ -400,24 +406,26 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         val markerOptions = MarkerOptions()
         markerOptions.position(latlng)
         markerOptions.title("Current Position")
-        Log.d("FUCK2", "works?")
+
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
         mCurrLocationMarker = mMap?.addMarker(markerOptions)
         mMap?.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 14.0f))
     }
-    fun displayHorizon(horizonDist : Double,latlong:Array<Double>)
+    fun displayHorizon(latlong:Array<Double>)
     {
 
 
 
+        distanceToHorizon(altitudeHolder,locArray)
 
-        mHorizonPolyline?.remove()
-        mHorizonCircle?.remove()
+        var horizonDist = horizonHolder //this is kinda stupid
+
+        //mHorizonPolyline?.remove()
+        //mHorizonCircle?.remove()
         val lat = latlong[0]
         val lon = latlong[1]
         val latlng = LatLng(lat,lon) // later fuse this with the calculation from snapToLocation and place in 1 place
-        Log.d("FUCK70","$lat $lon")
-        Log.d("FUCK70",latlong[0].toString())
+
 
 
 
@@ -471,7 +479,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
         val myAsyncTask = doInBackground(masterAltHolder)//execute(masterAltHolder).get()
         return myAsyncTask
 
-            //Log.d("FUCK60",myAsyncTask[0][0].toString())
+
 
 
 
@@ -497,14 +505,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
             for (i in 0..nOfRays)
             {
                 val bearing = (i*((Math.abs(endAngleHolder - startAngleHolder)/nOfRays)) + startAngleHolder)
-               // Log.d("FUCK61",bearing.toString())
                 val currPair = EndPoint(bearing,horizon,latitude,longitude)
-                //Log.d("FUCK61",currPair[0].toString() + " " + currPair[1].toString())
                 coordsMasterList.add(i,currPair)
             }
-            //Log.d("FUCK56", latitude.toString() + " " +  longitude.toString() + " " + horizon.toString())
-            //Log.d("FUCK56", coordsMasterList[0][0].toString())
-            //Log.d("FUCK56", coordsMasterList[0][1].toString())
+
 
             //now coordsMasterList stores all target points for our path that we will obtain from the url
 
@@ -540,13 +544,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
                     var latCheck = 0
                     var lonCheck = 0
 
-                    Log.d("FUCK80",latitude.toString())
+
 
                     while (inp.readLine().also { line = it } != null) {
-                        //Log.d("FUCK57","WHAT?")
-                        Log.d("FUCK66",line.toString())
+
+
                         if (line?.contains("REQUEST DENIED") == true) {
-                            Log.d("FUCK61","ERROR")
+
                             eleHold = -99999.0
                             latHold = 0.0
                             lonHold = 0.0
@@ -626,14 +630,14 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
             lat2 = Math.toDegrees(lat2)
             lon2 = Math.toDegrees(lon2)
 
-            //Log.d("FUCK56", lon2.toString())
+
             return arrayOf(lat2, lon2)
         }
         private fun unpackURL(result : String?,dataType : String,concencationIndex : Int ) : Double
         {
 
-            //todo: Replace elevationStr & finalElevation with more appropriate variable names
-            //Log.d("FUCK57", result.toString())
+
+
             //check if the arriving string is valid
             var finalElevation = 0.0 // if null returns 0.0 / if error returns -99999 / if correct returns correct altitude called from Google Maps
             var elevationStr = "0.0"
@@ -643,12 +647,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
             if (result != null) {
 
                 if (result.contains(dataType)) {
-                    Log.d("FUCK57","Valid String ")
-                    Log.d("FUCK58",result)
                     elevationStr = result.toString()
                     elevationStr = elevationStr.subSequence(concencationIndex,elevationStr.length) as String
                     elevationStr = elevationStr.subSequence(0,elevationStr.length - 1) as String
-                    //Log.d("FUCK58",elevationStr)
+
 
                     //TODO: WARNING THERES A BUG THAT CAUSES A FATAL ERROR IF THE COORDINATES ARE TOO PERFECT (EG. 0,0)
                     // ALSO IF ELEVATION IS NEGATIVE IT GETS FLIPPED SO WATCH OUT FOR THAT AND FIX IT LATER
@@ -670,7 +672,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
             //compiledAltitudeList = list for ONE ARRAY ONE
             var finalCoords = arrayOf(targetLat,targetLon)
             for (k in 0 .. compiledAltiudeList.size - 1) {
-                //Log.d("FUCK62",compiledAltiudeList[k][0].toString() + " " + ourAltitude.toString())
+
                 if (compiledAltiudeList[k][0] < ourAltitude) {
                     finalCoords = arrayOf(compiledAltiudeList[k][1],compiledAltiudeList[k][2])
 
@@ -692,7 +694,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback{
 
 
 
-//}
+
 
 
 

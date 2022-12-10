@@ -67,7 +67,7 @@ class SettingsActivity : AppCompatActivity() {
 
             }
 
-            Log.d("FUCK71","$artf_lat $artf_lon")
+
             val intent = Intent(this,MainActivity::class.java)
             intent.putExtra("ray_value",ray_str)
             intent.putExtra("sample_value",sample_str)
